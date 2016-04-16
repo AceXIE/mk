@@ -387,12 +387,14 @@ $ for i in 4 5 6; do ethercat -p $i download --type uint16 0x8010 0x01 2000; don
 
 ## LinuxCNC / EtherCAT HAL-Module
 
+可以参考 http://wiki.linuxcnc.org/cgi-bin/wiki.pl?EtherCatDriver
 Installation als Debian-Paket:
 ```bash
 $ git clone https://github.com/sittner/linuxcnc-ethercat
 $ cd linuxcnc-ethercat
 ```
 Debian-Paket bauen und installieren:
+可以直接打包
 ```bash
 $ sudo apt-get -y install machinekit-dev
 $ dpkg-checkbuilddeps
@@ -401,6 +403,7 @@ $ cd ..
 $ sudo dpkg -i linuxcnc-ethercat*deb
 ```
 alternativ: manuelle Installation:
+备用，也可以手动。
 ```bash
 $ sudo apt-get -y install machinekit-dev
 $ git clone https://github.com/sittner/linuxcnc-ethercat

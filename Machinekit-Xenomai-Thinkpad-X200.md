@@ -8,6 +8,7 @@
 ### Übersicht
 
 Übersicht Steuerung:
+控制概述
 ![Übersicht Steuerung](pics/IMG_20150515_172113.jpg)
  1. IBM Thinkpad X200 mit Debian Jessie / Linux 3.8.1 / Machinekit 0.1 / Xenomai 2.6.4
  2. 24VDC 50W Netzteil
@@ -64,7 +65,18 @@ Prüfsumme berechnen und vergleichen mit [MD5SUMS](http://cdimage.debian.org/cdi
 ```bash
 $ md5sum debian-live-8.0.0-amd64-gnome-desktop+nonfree.iso 
 7a56cc2f78f8ea90d0c78fc462f95b95  debian-live-8.0.0-amd64-gnome-desktop+nonfree.iso
-```
+```/usr/bin/ld: error: ethercat uses VFP register arguments, ../master/soe_errors.o does not
+/usr/bin/ld: failed to merge target specific data of file ../master/soe_errors.o
+collect2: ld returned 1 exit status
+make[3]: *** [ethercat] Error 1
+make[3]: Leaving directory `/home/machinekit/ec-debianize/tool'
+make[2]: *** [install-recursive] Error 1
+make[2]: Leaving directory `/home/machinekit/ec-debianize'
+make[1]: *** [install] Error 2
+make[1]: Leaving directory `/home/machinekit/ec-debianize'
+make: *** [install] Error 2
+dpkg-buildpackage: error: debian/rules binary gave error exit status 2
+
 ISO-Datei auf USB-Stick kopieren:
 ```bash
 $ sudo dd if=debian-live-8.0.0-amd64-gnome-desktop+nonfree.iso of=/dev/sdX
@@ -161,7 +173,7 @@ Danach Aus- und wieder Einloggen, damit Eintragung wirksam wird.
 
 SSH Logins beschleunigen:
 ```bash
-$ sudo su -c 'echo -e "UseDNS no" >> /etc/ssh/sshd_config
+$ sudo su -c 'echo -e "UseDNS no" >> /etc/ssh/sshd_config'
 ```
 
 Keine Meldungen bei SSH-Login:
@@ -177,18 +189,17 @@ Wie in http://www.machinekit.io/docs/packages-debian/ vorgehen.
 
 Paketmanager konfigurieren:
 ```bash
-$ sudo sh -c \
-    "echo 'deb http://deb.dovetail-automata.com jessie main' > \
-	    /etc/apt/sources.list.d/machinekit.list; \
-	    apt-get update ; \
-	    apt-get -y --force-yes install dovetail-automata-keyring"
-$ sudo apt-get update
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 43DDF224
+sudo sh -c \
+  "echo 'deb http://deb.machinekit.io/debian jessie main' > \
+    /etc/apt/sources.list.d/machinekit.list"
+$ sudo apt update
 ```
 
 Machinekit Pakete installieren:
 ```bash
-$ sudo apt-get -y install linux-image-xenomai.x86-amd64 linux-headers-xenomai.x86-amd64
-$ sudo apt-get -y install machinekit machinekit-xenomai machinekit-posix machinekit-dev
+$ sudo apt -y install linux-image-xenomai.x86-amd64 linux-headers-xenomai.x86-amd64
+$ sudo apt -y install machinekit machinekit-xenomai machinekit-posix machinekit-dev
 ```
 
 ### Konfiguration Linux / Xenomai
@@ -196,8 +207,10 @@ $ sudo apt-get -y install machinekit machinekit-xenomai machinekit-posix machine
 Anpassung der Kernel-Parameter in ```/etc/default/grub```:
 ```ini
 #GRUB_CMDLINE_LINUX_DEFAULT="quiet"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet xeno_hal.smi=1 lapic=notscdeadline hpet=disable i915.i915_enable_rc6=0 i915.powersave=0 intel_idle.max_cstate=1 processor.max_cstate=1 isolcpus=1 idle=poll"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet xeno_nucleus.xenomai_gid=120 xeno_hal.smi=1 lapic=notscdeadline hpet=disable i915.i915_enable_rc6=0 i915.powersave=0 intel_idle.max_cstate=1 processor.max_cstate=1 isolcpus=1 idle=poll"
 ```
+
+```xeno_nucleus.xenomai_gid=120 # xenomai group id```, siehe [http://xenomai.org/2014/06/running-a-xenomai-application-as-a-regular-user/](Running a Xenomai application as a regular user).
 
 Bootloader neu konfigurieren und neustarten:
 ```bash
@@ -213,7 +226,7 @@ Linux x200 3.8-1-xenomai.x86-amd64 #1 SMP Debian 3.8.13-12~1jessie~1da x86_64 GN
 
 Anderen Kernel entfernen:
 ```bash
-$ sudo apt-get -y remove --purge linux-image-amd64 linux-headers-amd64 linux-image-3.16.*-amd64 linux-headers-3.16.*-common linux-headers-3.16.*-amd64 linux-kbuild-3.16
+$ sudo apt -y remove --purge linux-image-amd64 linux-headers-amd64 linux-image-3.16.*-amd64 linux-headers-3.16.*-common linux-headers-3.16.*-amd64 linux-kbuild-3.16
 ```
 
 Deaktivierung von SMI prüfen:
@@ -308,12 +321,12 @@ siehe https://github.com/sittner/ec-debianize
 Installation:
 
 ```bash
-$ sudo apt-get -y install git
+$ sudo apt -y install git
 $ git clone https://github.com/sittner/ec-debianize
 $ cd ec-debianize
 $ debian/configure -r
 $ dpkg-checkbuilddeps
-$ sudo apt-get -y install debhelper gettext autoconf automake libtool dpatch libxenomai-dev
+$ sudo apt -y install debhelper gettext autoconf automake libtool dpatch libxenomai-dev
 $ dpkg-buildpackage
 $ cd ..
 $ sudo dpkg -i etherlabmaster*deb
@@ -346,7 +359,7 @@ DEVICE_MODULES="e1000e"
 Installation ntp:
 
 ```bash
-$ sudo apt-get -y install ntp
+$ sudo apt -y install ntp
 ```
 
 Benutzer in die Gruppe "ethercat" aufnehmen:
@@ -377,35 +390,39 @@ Siehe Beckhoff [BECKHOFF EL7031, EL7041-x00x, EP7041-000x: Commissioning](http:/
 * [Configuration of the main parameters](http://infosys.beckhoff.de/english.php?content=../content/1033/el70x1/html/ex70x1_adjustments.htm&id=9833)
 
 Ausgangsleistung auslesen:
+
+读取EtherCAT中的SDO入口
 ```bash
 $ for i in 4 5 6; do ethercat -p $i   upload --type uint16 0x8010 0x01; done
 ```
 Ausgangsleistung (– hier: 2000mA) anpassen:
+
+输出功率，在这里2000mA
 ```bash
 $ for i in 4 5 6; do ethercat -p $i download --type uint16 0x8010 0x01 2000; done
 ```
 
 ## LinuxCNC / EtherCAT HAL-Module
 
-可以参考 http://wiki.linuxcnc.org/cgi-bin/wiki.pl?EtherCatDriver
 Installation als Debian-Paket:
+作为debian安装包安装
 ```bash
 $ git clone https://github.com/sittner/linuxcnc-ethercat
 $ cd linuxcnc-ethercat
 ```
 Debian-Paket bauen und installieren:
-可以直接打包
+构建和安装Debian软件包
 ```bash
-$ sudo apt-get -y install machinekit-dev
+$ sudo apt -y install machinekit-dev
 $ dpkg-checkbuilddeps
 $ dpkg-buildpackage
 $ cd ..
 $ sudo dpkg -i linuxcnc-ethercat*deb
 ```
 alternativ: manuelle Installation:
-备用，也可以手动。
+备选：手动安装：
 ```bash
-$ sudo apt-get -y install machinekit-dev
+$ sudo apt -y install machinekit-dev
 $ git clone https://github.com/sittner/linuxcnc-ethercat
 $ make -C linuxcnc-ethercat all
 $ sudo make -C linuxcnc-ethercat install
@@ -429,8 +446,8 @@ $ ln -s mk/linuxcnc machinekit
 ### Logging via PostgreSQL
 
 ```bash
-$ sudo apt-get -y install postgresql
-$ sudo apt-get -y install python-psycopg2
+$ sudo apt -y install postgresql
+$ sudo apt -y install python-psycopg2
 $ sudo su - postgres -c "createuser koppi"
 $ sudo su - postgres -c "createdb -O koppi koppi"
 $ psql -c "create table log(id SERIAL PRIMARY KEY, time timestamp, task_mode int, file varchar(1024), line int, x_min float, x_max float, x_avg float, y_min float, y_max float, y_avg float, z_min float, z_max float, z_avg float);"
@@ -445,13 +462,13 @@ $ sudo comp --install ownanalytics.comp
 ### sensors
 
 ```bash
-$ sudo apt-get -y install lm-sensors
+$ sudo apt -y install lm-sensors
 ```
 
 ### JoyPad einrichten
 
 ```bash
-$ sudo apt-get -y install jstest-gtk joystick
+$ sudo apt -y install jstest-gtk joystick
 $ jscal -p /dev/input/jsX > jscal.sh # replace X with your joypad's number
 $ echo '#!/usr/bin/env bash' | cat - jscal.sh > /tmp/out && mv /tmp/out jscal.sh
 $ chmod +x jscal.sh
@@ -514,7 +531,7 @@ o<scan_surface> call [0][0][220][220][10][100][10][1.5][-3]
 Neue Messwerte aktivieren und Plot erstellen:
 ```bash
 $ cp engrcomp.txt koppi-cnc-engraving-comp.txt
-$ sudo apt-get -y install gnuplot-x11
+$ sudo apt -y install gnuplot-x11
 $ ./koppi-cnc-engraving-comp-plot.sh
 ```
 ![Visualisierung der Z-Achsen Korrektur](linuxcnc/configs/koppi-cnc/koppi-cnc-engraving-comp.png)
@@ -537,7 +554,7 @@ $ watch -t.1 koppi-cnc-info.sh
 ### HAL-Graph Visualisierung
 
 ```bash
-$ sudo apt-get -y install python-pydot graphviz
+$ sudo apt -y install python-pydot graphviz
 $ linuxcnc/configs/koppi-cnc/hal-graph.py
 ```
 
